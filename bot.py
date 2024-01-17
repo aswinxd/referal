@@ -56,7 +56,7 @@ async def help(client, message):
                        "/points - Check your points\n"
                        "/reset - Reset your points")
 
-@bot.on_message(filters.text & ~filters.command)
+@bot.on_message(filters.text & ~filters.command & ~filters.forwarded)
 async def handle_referral(client, message):
     user_id = message.chat.id
     if message.text.startswith('/start'):
