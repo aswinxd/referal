@@ -31,7 +31,7 @@ def menu(id):
     keyboard = telebot.types.ReplyKeyboardMarkup(True)
     keyboard.row('🆔 Account')
     keyboard.row('🙌🏻 Referrals', '🎁 Bonus', '💸 Withdraw')
-    keyboard.row('⚙️ Set Wallet', '📊 Statistics', '📢 Broadcast')  # Added '📢 Broadcast' option
+    keyboard.row('⚙️ Set Wallet', '📊 Statistics', '📢 Broadcast')  # Added 'Broadcast' option
     bot.send_message(id, "*🏡 Home*", parse_mode="Markdown", reply_markup=keyboard)
 
 @bot.message_handler(commands=['start'])
@@ -48,8 +48,8 @@ def start(message):
             # ... (rest of your existing /start logic)
         else:
             # ... (rest of your existing /start logic)
-    except Exception as e:
-        handle_error(message, e)
+    except:
+        handle_error(message)
 
 @bot.callback_query_handler(func=lambda call: True)
 def query_handler(call):
@@ -59,8 +59,8 @@ def query_handler(call):
             # ... (rest of your existing /check logic)
         else:
             # ... (rest of your existing /check logic)
-    except Exception as e:
-        handle_error(call.message, e)
+    except:
+        handle_error(call.message)
 
 @bot.message_handler(content_types=['text', 'document'])  # Added 'document' content type
 def send_text(message):
@@ -71,10 +71,8 @@ def send_text(message):
             broadcast(message)
         else:
             # ... (rest of your existing logic)
-    except Exception as e:
-        handle_error(message, e)
-
-# ... (rest of your existing functions)
+    except:
+        handle_error(message)
 
 def broadcast(message):
     try:
@@ -83,8 +81,8 @@ def broadcast(message):
             bot.register_next_step_handler(message, handle_broadcast)
         else:
             bot.send_message(message.chat.id, "You are not authorized to use this command.")
-    except Exception as e:
-        handle_error(message, e)
+    except:
+        handle_error(message)
 
 def handle_broadcast(message):
     try:
@@ -102,12 +100,15 @@ def handle_broadcast(message):
             bot.send_message(OWNER_ID, "Broadcast completed successfully.")
         else:
             bot.send_message(message.chat.id, "You are not authorized to use this command.")
-    except Exception as e:
-        handle_error(message, e)
+    except:
+        handle_error(message)
 
-def handle_error(message, error):
-    bot.send_message(message.chat.id, f"An error occurred: {str(error)}")
-    bot.send_message(OWNER_ID, f"Your bot encountered an error: {str(error)}")
+# ... (rest of your existing functions)
+
+def handle_error(message, exception=None):
+    bot.send_message(OWNER_ID, f"Error occurred in the bot:\n\n{str(exception)}")
+    bot.send_message(message.chat.id, "An error occurred. The administrator has been notified.")
+    print(f"Error occurred: {str(exception)}")
 
 if __name__ == '__main__':
     bot.polling(none_stop=True)
