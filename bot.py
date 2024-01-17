@@ -17,9 +17,9 @@ async def save_referral(user_id: int, referred_by: int):
     pass
 
 
-async def get_referred_owner_id(user_id: int):
-    # Replace this with your logic to retrieve the owner of the referral for a specific user from your database
-    return None
+async def get_referred_users():
+    # Replace this with your logic to retrieve the list of users who joined using a referral link from your database
+    return []
 
 
 async def send_messages_to_user(user_id: int, messages: list):
@@ -47,12 +47,6 @@ async def start_command_handler(_, message: Message):
 
         # Save referral information
         await save_referral(user_id, referred_by)
-
-        # Get videos from the DB channel and send them to the referral owner
-        messages = await app.get_chat_history(chat_id=DB_CHANNEL_ID, limit=5)
-        for msg in messages:
-            if msg.video:
-                await app.copy_message(chat_id=referred_by, from_chat_id=DB_CHANNEL_ID, message_id=msg.message_id)
 
     await message.reply_text("Welcome to the bot!")
 
