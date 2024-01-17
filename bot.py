@@ -1,5 +1,6 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, CallbackContext, CallbackQueryHandler
+
 import sqlite3
 
 # Connect to SQLite database
@@ -24,13 +25,17 @@ def start(update: Update, context: CallbackContext) -> None:
 
     update.message.reply_text('Share this bot with your friends!', reply_markup=reply_markup)
 
+def button(update: Update, context: CallbackContext) -> None:
+    # Define your button logic here
+    pass
+
 def main() -> None:
-    updater = Updater("6520550784:AAEUC8Itct_VMe4cbJbUXVZxE-rw8PM0REQ", use_context=True)
+    updater = Updater("bottoken", use_context=True)
 
     dispatcher = updater.dispatcher
 
     dispatcher.add_handler(CommandHandler("start", start))
-    dispatcher.add_handler(CallbackQueryHandler(button))
+    dispatcher.add_handler(CallbackQueryHandler(button))  # Make sure 'button' is defined before this line
 
     updater.start_polling()
 
