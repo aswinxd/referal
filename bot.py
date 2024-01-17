@@ -1,63 +1,50 @@
-# bot.py
+import telebot
+from telebot import types
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Updater, CommandHandler, CallbackContext, CallbackQueryHandler
+TOKEN = '6520550784:AAEUC8Itct_VMe4cbJbUXVZxE-rw8PM0REQ'
+bot = telebot.TeleBot(TOKEN)
 
-import sqlite3
-import os  # Import the os module
-from config import BOT_TOKEN
+referral_points = {}
 
-def get_connection():
-    # Create and return a new SQLite connection
-    return sqlite3.connect('referral.db')
+@bot.message_handler(commands=['start'])
+def start(message):
+    markup = types.InlineKeyboardMarkup()
+    referral_link = f"https://t.me/{bot.get_me().username}?start={message.chat.id}"
+    referral_button = types.InlineKeyboardButton(text='Click here to join', url=referral_link)
+    markup.add(referral_button)
+    bot.send_message(message.chat.id, "Welcome to the referral bot!", reply_markup=markup)
 
-def start(update: Update, context: CallbackContext) -> None:
-    user_id = update.message.from_user.id
-    referrer_id = context.args[0] if context.args else None
+@bot.message_handler(commands=['points'])
+def points(message):
+    user_id = message.chat.id
+    if user_id in referral_points:
+        points = referral_points[user_id]
+        bot.send_message(user_id, f"You have {points} points.")
+    else:
+        bot.send_message(user_id, "You don't have any points yet.")
 
-    # Delete the existing database file if it exists
-    if os.path.exists('referral.db'):
-        os.remove('referral.db')
+@bot.message_handler(commands=['reset'])
+def reset(message):
+    user_id = message.chat.id
+    if user_id in referral_points:
+        referral_points.pop(user_id)
+        bot.send_message(user_id, "Your points have been reset.")
+    else:
+        bot.send_message(user_id, "You don't have any points to reset.")
 
-    with get_connection() as conn:
-        c = conn.cursor()
+@bot.message_handler(commands=['help'])
+def help(message):
+    bot.send_message(message.chat.id, "Commands:\n"
+                                      "/start - Get your referral link\n"
+                                      "/points - Check your points\n"
+                                      "/reset - Reset your points")
 
-        # Create table with correct column names
-        c.execute('''CREATE TABLE IF NOT EXISTS referrals
-                     (referrer_id INTEGER, referred_id INTEGER)''')
+@bot.message_handler(func=lambda message: True)
+def handle_referral(message):
+    if message.text.startswith('/start'):
+        referred_by = message.text.split(' ')[1]
+        referral_points.setdefault(referred_by, 0)
+        referral_points[referred_by] += 1
+        bot.send_message(referred_by, f"You have been referred by {message.chat.id} and earned 1 point!")
 
-        if referrer_id:
-            # Save referral to database
-            c.execute("INSERT INTO referrals VALUES (?, ?)", (referrer_id, user_id))
-            conn.commit()
-
-        referral_count = get_referral_count(c, user_id)
-
-    keyboard = [[InlineKeyboardButton("Share", switch_inline_query=f"referral {user_id}")]]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-
-    update.message.reply_text(f"You have {referral_count} referrals. Share this bot with your friends!", reply_markup=reply_markup)
-
-def get_referral_count(c, user_id):
-    # Retrieve the number of referrals for a given user
-    c.execute("SELECT COUNT(*) FROM referrals WHERE referrer_id=?", (user_id,))
-    return c.fetchone()[0]
-
-def button(update: Update, context: CallbackContext) -> None:
-    # Define your button logic here
-    pass
-
-def main() -> None:
-    updater = Updater(BOT_TOKEN, use_context=True)
-
-    dispatcher = updater.dispatcher
-
-    dispatcher.add_handler(CommandHandler("start", start))
-    dispatcher.add_handler(CallbackQueryHandler(button))
-
-    updater.start_polling()
-
-    updater.idle()
-
-if __name__ == '__main__':
-    main()
+bot.polling()
