@@ -1,7 +1,10 @@
+# bot.py
+
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, CallbackContext, CallbackQueryHandler
 
 import sqlite3
+from config import BOT_TOKEN  # Import BOT_TOKEN from config.py
 
 # Connect to SQLite database
 conn = sqlite3.connect('referral.db')
@@ -30,7 +33,7 @@ def button(update: Update, context: CallbackContext) -> None:
     pass
 
 def main() -> None:
-    updater = Updater("bottoken", use_context=True)
+    updater = Updater(BOT_TOKEN, use_context=True)  # Use BOT_TOKEN from config.py
 
     dispatcher = updater.dispatcher
 
