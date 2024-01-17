@@ -11,7 +11,6 @@ bot = Client(
 )
 
 referral_points = {}
-referral_forwardings = {}
 
 async def forward_messages(from_chat_id, to_chat_id, message_id):
     try:
@@ -56,7 +55,7 @@ async def help(client, message):
                        "/points - Check your points\n"
                        "/reset - Reset your points")
 
-@bot.on_message(filters.text & ~filters.command & ~filters.forwarded)
+@bot.on_message(filters.text & ~filters.command & ~filters.forwarded & ~filters.edited)
 async def handle_referral(client, message):
     user_id = message.chat.id
     if message.text.startswith('/start'):
