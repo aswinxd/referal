@@ -17,6 +17,10 @@ def start(update: Update, context: CallbackContext) -> None:
     with get_connection() as conn:
         c = conn.cursor()
 
+        # Create table if it doesn't exist with correct column names
+        c.execute('''CREATE TABLE IF NOT EXISTS referrals
+                     (referrer_id INTEGER, referred_id INTEGER)''')
+
         if referrer_id:
             # Save referral to database
             c.execute("INSERT INTO referrals VALUES (?, ?)", (referrer_id, user_id))
