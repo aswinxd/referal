@@ -2,7 +2,7 @@
 
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
-from config import API_ID, API_HASH, BOT_TOKEN, DB_CHANNEL_ID, ADMINS
+from config import API_ID, API_HASH, BOT_TOKEN, ADMINS
 
 app = Client("referral_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
@@ -24,19 +24,7 @@ async def get_referred_users():
 
 async def send_messages_to_user(user_id: int, messages: list):
     for message in messages:
-        await app.copy_message(chat_id=user_id, from_chat_id=message.chat.id, message_id=message.message_id)
-
-
-@app.on_message(filters.private & filters.command("genlink"))
-async def genlink_command_handler(_, message: Message):
-    user_id = message.from_user.id
-    referral_code = await generate_referral_code(user_id)
-
-    link = f"https://t.me/{(await app.get_me()).username}?start={referral_code}"
-
-    reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton("🔗 Get Referral Link", url=link)]])
-    await message.reply_text(f"Your referral link is: {link}", reply_markup=reply_markup)
-
+        await app.send_message(chat_id=user_id, text=message.text)  # Change to send_message
 
 @app.on_message(filters.private & filters.command("start"))
 async def start_command_handler(_, message: Message):
@@ -49,7 +37,6 @@ async def start_command_handler(_, message: Message):
         await save_referral(user_id, referred_by)
 
     await message.reply_text("Welcome to the bot!")
-
 
 @app.on_message(filters.private & filters.user(ADMINS) & filters.command("send"))
 async def send_command_handler(_, message: Message):
