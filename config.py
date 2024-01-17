@@ -1,15 +1,15 @@
 class Config:
     # Telegram Bot Token
-    BOT_TOKEN = "6520550784:AAEUC8Itct_VMe4cbJbUXVZxE-rw8PM0REQ"
+    BOT_TOKEN = "6989181696:AAH7qdRfmMLdM4BxnSQGSvATCPPkOSB-d9Y"
 
     # Payment Channel
-    PAYMENT_CHANNEL = "@testpostchnl"
+    PAYMENT_CHANNEL = "@asdfghjklxcvbns"
 
     # Owner's User ID
     OWNER_ID = 6854172577
 
     # Channels to be checked
-    CHANNELS = ["@testpostchnl"]
+    CHANNELS = ["@asdfghjklxcvbns"]
 
     # Daily Bonus amount
     DAILY_BONUS = 1
