@@ -4,6 +4,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, CallbackContext, CallbackQueryHandler
 
 import sqlite3
+import os  # Import the os module
 from config import BOT_TOKEN
 
 def get_connection():
@@ -14,10 +15,14 @@ def start(update: Update, context: CallbackContext) -> None:
     user_id = update.message.from_user.id
     referrer_id = context.args[0] if context.args else None
 
+    # Delete the existing database file if it exists
+    if os.path.exists('referral.db'):
+        os.remove('referral.db')
+
     with get_connection() as conn:
         c = conn.cursor()
 
-        # Create table if it doesn't exist with correct column names
+        # Create table with correct column names
         c.execute('''CREATE TABLE IF NOT EXISTS referrals
                      (referrer_id INTEGER, referred_id INTEGER)''')
 
