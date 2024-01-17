@@ -1,5 +1,5 @@
 # config.py
-
+API_ID = '25618507'
+API_HASH = 'b8b91983b578360ec05a7e88e17b06ea'
 TOKEN = '6520550784:AAEUC8Itct_VMe4cbJbUXVZxE-rw8PM0REQ'
 CHANNEL_USERNAME = '@asdfghjklxcvbns'
-
