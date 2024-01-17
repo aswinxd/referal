@@ -8,6 +8,12 @@ bot = telebot.TeleBot(TOKEN)
 referral_points = {}
 referral_forwardings = {}
 
+async def forward_messages(from_chat_id, to_chat_id, message_id):
+    try:
+        await bot.forward_message(chat_id=to_chat_id, from_chat_id=from_chat_id, message_id=message_id)
+    except Exception as e:
+        print(f"Error forwarding message: {e}")
+
 @bot.message_handler(commands=['start'])
 def start(message):
     user_id = message.chat.id
@@ -57,17 +63,42 @@ def handle_referral(message):
             referral_points[referred_by] += 1
             bot.send_message(referred_by, f"You have been referred by {user_id} and earned 1 point!")
 
-            # Store information about the referral for future forwarding
-            referral_forwardings.setdefault(referred_by, []).append(user_id)
-
             # Forward videos from the channel to the user who used the referral link
             forward_videos(referred_by)
 
+            # Forward the last message from the channel to the user who used the referral link
+            forward_last_message_from_channel(referred_by)
+
 def forward_videos(referrer_id):
-    messages = bot.get_chat_history(CHANNEL_USERNAME, limit=5)
-    for message in messages:
-        if message.video:
-            for user_id in referral_forwardings.get(referrer_id, []):
-                bot.forward_message(user_id, CHANNEL_USERNAME, message.message_id)
+    try:
+        # Assuming you have a variable 'CHANNEL_USERNAME' defined
+        messages = bot.get_chat_history(CHANNEL_USERNAME, limit=5)
+        for message in messages:
+            if message.video:
+                # Forward the last video message to the user
+                forward_messages(CHANNEL_USERNAME, referrer_id, message.message_id)
+    except Exception as e:
+        print(f"Error forwarding videos: {e}")
+
+def forward_last_message_from_channel(user_id):
+    try:
+        # Assuming you have a variable 'CHANNEL_USERNAME' defined
+        messages = bot.get_chat_history(CHANNEL_USERNAME, limit=1)
+        for message in messages:
+            # Forward the last message to the user
+            forward_messages(CHANNEL_USERNAME, user_id, message.message_id)
+    except Exception as e:
+        print(f"Error forwarding last message: {e}")
+
+# Incorporate link generator and batch functions
+@bot.message_handler(commands=['batch'])
+def batch(message):
+    # Add batch functionality logic here
+    pass
+
+@bot.message_handler(commands=['genlink'])
+def link_generator(message):
+    # Add link generator functionality logic here
+    pass
 
 bot.polling()
