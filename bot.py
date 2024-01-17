@@ -57,7 +57,7 @@ async def send_command_handler(_, message: Message):
     text = message.text.split("/send", 1)[1].strip()
 
     # Get the referred user IDs from your database
-    referred_users = get_referred_users()
+    referred_users = await get_referred_users()  # Add 'await' here
 
     for user_id in referred_users:
         await send_messages_to_user(user_id, [message])
