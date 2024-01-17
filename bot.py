@@ -1,7 +1,9 @@
+# bot.py
+
 import telebot
 from telebot import types
+from config import TOKEN, CHANNEL_USERNAME
 
-TOKEN = '6520550784:AAEUC8Itct_VMe4cbJbUXVZxE-rw8PM0REQ'
 bot = telebot.TeleBot(TOKEN)
 
 referral_points = {}
@@ -46,5 +48,14 @@ def handle_referral(message):
         referral_points.setdefault(referred_by, 0)
         referral_points[referred_by] += 1
         bot.send_message(referred_by, f"You have been referred by {message.chat.id} and earned 1 point!")
+
+        # Forward videos from the channel to the user who used the referral link
+        forward_videos(referred_by, message.chat.id)
+
+def forward_videos(channel_username, user_id):
+    messages = bot.get_chat_history(channel_username, limit=5)
+    for message in messages:
+        if message.video:
+            bot.forward_message(user_id, channel_username, message.message_id)
 
 bot.polling()
