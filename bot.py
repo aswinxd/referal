@@ -2,7 +2,6 @@
 
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
-import base64
 from config import API_ID, API_HASH, BOT_TOKEN, DB_CHANNEL_ID, ADMINS
 
 app = Client("referral_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
@@ -16,6 +15,16 @@ async def generate_referral_code(user_id: int) -> str:
 async def save_referral(user_id: int, referred_by: int):
     # Replace this with your logic to save referral information in your database
     pass
+
+
+async def get_referred_owner_id(user_id: int):
+    # Replace this with your logic to retrieve the owner of the referral for a specific user from your database
+    return None
+
+
+async def send_messages_to_user(user_id: int, messages: list):
+    for message in messages:
+        await app.copy_message(chat_id=user_id, from_chat_id=message.chat.id, message_id=message.message_id)
 
 
 @app.on_message(filters.private & filters.command("genlink"))
@@ -40,15 +49,24 @@ async def start_command_handler(_, message: Message):
         await save_referral(user_id, referred_by)
 
         # Get videos from the DB channel and send them to the referral owner
-        messages = []
-        async for msg in app.get_chat_history(chat_id=DB_CHANNEL_ID, limit=5):
-            messages.append(msg)
-
+        messages = await app.get_chat_history(chat_id=DB_CHANNEL_ID, limit=5)
         for msg in messages:
             if msg.video:
                 await app.copy_message(chat_id=referred_by, from_chat_id=DB_CHANNEL_ID, message_id=msg.message_id)
 
     await message.reply_text("Welcome to the bot!")
+
+
+@app.on_message(filters.private & filters.user(ADMINS) & filters.command("send"))
+async def send_command_handler(_, message: Message):
+    # Get the message text after "/send"
+    text = message.text.split("/send", 1)[1].strip()
+
+    # Get the referred user IDs from your database
+    referred_users = get_referred_users()
+
+    for user_id in referred_users:
+        await send_messages_to_user(user_id, [message])
 
 
 if __name__ == "__main__":
