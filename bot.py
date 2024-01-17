@@ -40,8 +40,8 @@ async def start_command_handler(_, message: Message):
         await save_referral(user_id, referred_by)
 
         # Get videos from the DB channel and send them to the referral owner
-        chat = await app.get_chat(chat_id=DB_CHANNEL_ID)
-        async for msg in app.iter_history(chat.id, limit=5):
+        messages = await app.get_chat_history(chat_id=DB_CHANNEL_ID, limit=5)
+        for msg in messages:
             if msg.video:
                 await app.copy_message(chat_id=referred_by, from_chat_id=DB_CHANNEL_ID, message_id=msg.message_id)
 
