@@ -1,59 +1,64 @@
 # bot.py
-import telebot
-from telebot import types
-from config import TOKEN, CHANNEL_USERNAME
+from pyrogram import Client, filters
+from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
+from config import API_ID, API_HASH, TOKEN, CHANNEL_USERNAME
 
-bot = telebot.TeleBot(TOKEN)
+bot = Client(
+    "referral_bot",
+    api_id=API_ID,
+    api_hash=API_HASH,
+    bot_token=TOKEN
+)
 
 referral_points = {}
 referral_forwardings = {}
 
 async def forward_messages(from_chat_id, to_chat_id, message_id):
     try:
-        await bot.forward_message(chat_id=to_chat_id, from_chat_id=from_chat_id, message_id=message_id)
+        await bot.forward_messages(chat_id=to_chat_id, from_chat_id=from_chat_id, message_ids=message_id)
     except Exception as e:
         print(f"Error forwarding message: {e}")
 
-@bot.message_handler(commands=['start'])
-def start(message):
+@bot.on_message(filters.command('start'))
+def start(client, message):
     user_id = message.chat.id
-    markup = types.InlineKeyboardMarkup()
+    markup = InlineKeyboardMarkup()
 
     # Construct referral link
-    referral_link = f"https://t.me/{bot.get_me().username}?start={user_id}"
+    referral_link = f"https://t.me/{(await bot.get_me()).username}?start={user_id}"
 
-    referral_button = types.InlineKeyboardButton(text='Click here to join', url=referral_link)
+    referral_button = InlineKeyboardButton(text='Click here to join', url=referral_link)
     markup.add(referral_button)
 
-    bot.send_message(user_id, "Welcome to the referral bot!", reply_markup=markup)
+    message.reply_text("Welcome to the referral bot!", reply_markup=markup)
 
-@bot.message_handler(commands=['points'])
-def points(message):
+@bot.on_message(filters.command('points'))
+def points(client, message):
     user_id = message.chat.id
     if user_id in referral_points:
         points = referral_points[user_id]
-        bot.send_message(user_id, f"You have {points} points.")
+        message.reply_text(f"You have {points} points.")
     else:
-        bot.send_message(user_id, "You don't have any points yet.")
+        message.reply_text("You don't have any points yet.")
 
-@bot.message_handler(commands=['reset'])
-def reset(message):
+@bot.on_message(filters.command('reset'))
+def reset(client, message):
     user_id = message.chat.id
     if user_id in referral_points:
         referral_points.pop(user_id)
-        bot.send_message(user_id, "Your points have been reset.")
+        message.reply_text("Your points have been reset.")
     else:
-        bot.send_message(user_id, "You don't have any points to reset.")
+        message.reply_text("You don't have any points to reset.")
 
-@bot.message_handler(commands=['help'])
-def help(message):
-    bot.send_message(message.chat.id, "Commands:\n"
-                                      "/start - Get your referral link\n"
-                                      "/points - Check your points\n"
-                                      "/reset - Reset your points")
+@bot.on_message(filters.command('help'))
+def help(client, message):
+    message.reply_text("Commands:\n"
+                       "/start - Get your referral link\n"
+                       "/points - Check your points\n"
+                       "/reset - Reset your points")
 
-@bot.message_handler(func=lambda message: True)
-def handle_referral(message):
+@bot.on_message(filters.text & ~filters.command)
+def handle_referral(client, message):
     user_id = message.chat.id
     if message.text.startswith('/start'):
         referred_by = message.text.split(' ')[1] if len(message.text.split(' ')) > 1 else None
@@ -91,14 +96,72 @@ def forward_last_message_from_channel(user_id):
         print(f"Error forwarding last message: {e}")
 
 # Incorporate link generator and batch functions
-@bot.message_handler(commands=['batch'])
-def batch(message):
-    # Add batch functionality logic here
-    pass
+@bot.on_message(filters.command('batch'))
+def batch(client, message):
+    user_id = message.chat.id
 
-@bot.message_handler(commands=['genlink'])
-def link_generator(message):
-    # Add link generator functionality logic here
-    pass
+    # Check if the user is an admin (or add your own admin check logic)
+    if user_id in [123456789, 987654321]:
+        try:
+            # Get the first and last messages from the DB Channel
+            first_message = await client.ask_text(
+                text="Forward the First Message from DB Channel (with Quotes) or Send the DB Channel Post Link",
+                chat_id=user_id,
+                filters=filters.forwarded | filters.text,
+                timeout=60
+            )
+            second_message = await client.ask_text(
+                text="Forward the Last Message from DB Channel (with Quotes) or Send the DB Channel Post Link",
+                chat_id=user_id,
+                filters=filters.forwarded | filters.text,
+                timeout=60
+            )
 
-bot.polling()
+            # Extract message IDs
+            f_msg_id = first_message.message_id
+            s_msg_id = second_message.message_id
+
+            # Generate a unique string based on message IDs
+            batch_key = f"batch-{f_msg_id}-{s_msg_id}"
+
+            # Perform batch processing using the batch_key
+            # (Add your logic for batch processing here)
+
+            await message.reply_text(f"Batch processing initiated with key: {batch_key}")
+        except TimeoutError:
+            await message.reply_text("Batch processing canceled due to timeout.")
+    else:
+        await message.reply_text("You are not authorized to use this command.")
+
+@bot.on_message(filters.command('genlink'))
+def link_generator(client, message):
+    user_id = message.chat.id
+
+    try:
+        # Get the message from the DB Channel
+        channel_message = await client.ask_text(
+            text="Forward Message from the DB Channel (with Quotes) or Send the DB Channel Post Link",
+            chat_id=user_id,
+            filters=filters.forwarded | filters.text,
+            timeout=60
+        )
+
+        # Extract message ID
+        msg_id = channel_message.message_id
+
+        # Generate a unique string based on message ID
+        link_key = f"get-{msg_id}"
+
+        # Perform link generation using the link_key
+        # (Add your logic for link generation here)
+
+        # Construct the referral link
+        base64_string = await encode(link_key)
+        referral_link = f"https://t.me/{(await bot.get_me()).username}?start={base64_string}"
+
+        await message.reply_text(f"Here is your referral link:\n{referral_link}")
+    except TimeoutError:
+        await message.reply_text("Link generation canceled due to timeout.")
+
+if __name__ == "__main__":
+    bot.run()
