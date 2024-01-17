@@ -1,5 +1,4 @@
 # bot.py
-
 import telebot
 from telebot import types
 from config import TOKEN, CHANNEL_USERNAME
@@ -10,11 +9,16 @@ referral_points = {}
 
 @bot.message_handler(commands=['start'])
 def start(message):
+    user_id = message.chat.id
     markup = types.InlineKeyboardMarkup()
-    referral_link = f"https://t.me/{bot.get_me().username}?start={message.chat.id}"
+    
+    # Construct referral link
+    referral_link = f"https://t.me/{bot.get_me().username}?start={user_id}"
+    
     referral_button = types.InlineKeyboardButton(text='Click here to join', url=referral_link)
     markup.add(referral_button)
-    bot.send_message(message.chat.id, "Welcome to the referral bot!", reply_markup=markup)
+    
+    bot.send_message(user_id, "Welcome to the referral bot!", reply_markup=markup)
 
 @bot.message_handler(commands=['points'])
 def points(message):
@@ -43,14 +47,17 @@ def help(message):
 
 @bot.message_handler(func=lambda message: True)
 def handle_referral(message):
+    user_id = message.chat.id
     if message.text.startswith('/start'):
-        referred_by = message.text.split(' ')[1]
-        referral_points.setdefault(referred_by, 0)
-        referral_points[referred_by] += 1
-        bot.send_message(referred_by, f"You have been referred by {message.chat.id} and earned 1 point!")
+        referred_by = message.text.split(' ')[1] if len(message.text.split(' ')) > 1 else None
 
-        # Forward videos from the channel to the user who used the referral link
-        forward_videos(referred_by, message.chat.id)
+        if referred_by:
+            referral_points.setdefault(referred_by, 0)
+            referral_points[referred_by] += 1
+            bot.send_message(referred_by, f"You have been referred by {user_id} and earned 1 point!")
+
+            # Forward videos from the channel to the user who used the referral link
+            forward_videos(referred_by, user_id)
 
 def forward_videos(channel_username, user_id):
     messages = bot.get_chat_history(channel_username, limit=5)
